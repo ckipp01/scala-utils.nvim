@@ -206,8 +206,7 @@ local complete_from_input = function()
   -- TODO: this can probably just be smaller a single line (look into how Telescope does this)
   local win = Float.percentage_range_window(0.5, 0.1)
   vim.api.nvim_buf_set_option(win.bufnr, "buftype", "prompt")
-  -- TODO: Make this prompt editable by users if they want
-  vim.fn.prompt_setprompt(win.bufnr, vim.g["scala_utils_prompt"] or "❯")
+  vim.fn.prompt_setprompt(win.bufnr, (vim.g["scala_utils_prompt"] or "❯") .. " ")
 
   vim.fn.prompt_setcallback(win.bufnr, function(text)
     vim.api.nvim_win_close(win.win_id, true)
