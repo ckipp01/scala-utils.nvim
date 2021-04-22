@@ -13,6 +13,23 @@ local key_mappings = {
   copy_version = "<cmd>lua require('scala-utils.coursier').copy_version()<CR>",
 }
 
+-- @param to_complete (string) The string to pass to complete
+local complete = function(to_complete)
+  local result
+  Job:new({
+    command = "cs",
+    args = { "complete", to_complete },
+    on_exit = function(j, return_val)
+      if return_val == 0 then
+        result = j:result()
+      else
+        print("Something went wrong, unable to get completions")
+      end
+    end,
+  }):sync()
+  return result
+end
+
 local Completion = {}
 Completion.__index = Completion
 
@@ -38,8 +55,7 @@ Completion.increment_stage = function(self)
   return self
 end
 
--- complete is what actually calls coursier. This also puts together the args to call it.
--- If your are at the VERSION stage it will also automatically reverse the list.
+-- Looking at the current state, formulate the completion args and call complete.
 Completion.complete = function(self)
   local seperator = ":"
   local args
@@ -52,29 +68,16 @@ Completion.complete = function(self)
   else
     print(string.format("Invalid stage: %s", self.stage))
   end
-  Job:new({
-    command = "cs",
-    args = { "complete", args },
-    on_exit = function(j, return_val)
-      if return_val == 0 then
-        self.completions = j:result()
-        -- If the artifact has a : we assume that this is the last step of the
-        -- completion and therefore reverse the order to have the newest
-        -- version come first.
-        if self.stage == VERSION_STAGE then
-          self:reverse()
-        end
-      else
-        print("Something went wrong, unable to get completions")
-      end
-    end,
-  }):sync()
+  self.completions = complete(args)
+  if self.stage == VERSION_STAGE then
+    self:reverse_completions()
+  end
   return self
 end
 
 -- TODO: Once https://github.com/nvim-lua/plenary.nvim/pull/109 is merged, just
 -- use reverse from there.
-Completion.reverse = function(self)
+Completion.reverse_completions = function(self)
   local n = #self.completions
   local i = 1
   while i < n do
@@ -223,6 +226,7 @@ local complete_from_input = function()
 end
 
 return {
+  complete = complete,
   complete_from_input = complete_from_input,
   complete_from_line = complete_from_line,
   continue_completion = continue_completion,

@@ -67,6 +67,14 @@ NOTE: These for sure are not stable for the time being.
 COURSIER API                                          *scala-utils-coursier-api*
 
                                                          *complete_from_input()*
+complete({to_complete})      Completes a given string. Must be in a valid
+                             format that `cs complete` can understand.
+
+                             Parameters:
+                               {to_complete} (string) The string to be
+                               completed.
+
+                                                         *complete_from_input()*
 complete_from_input()        Opens up a prompt for input from the user. This
                              will then function in the same manner that using
                              `cs complete` from the command line will. So the
@@ -82,11 +90,11 @@ complete_from_input()        Opens up a prompt for input from the user. This
                             completion `<CR>` will copy the version out.
 
                                                           *complete_from_line()*
-complete_from_line()       Provides the exact functionality as |complete()|
-                           however it will pull the org and artifact from the
-                           current line and start the completion from there.
-                           This will work in sbt build files, Mill build
-                           files, Ammonite scripts, and Metals worksheets.
+complete_from_line()        Provides the exact functionality as |complete()|
+                            however it will pull the org and artifact from the
+                            current line and start the completion from there.
+                            This will work in sbt build files, Mill build
+                            files, Ammonite scripts, and Metals worksheets.
 
 
 vim:tw=80:ts=2:ft=help:
