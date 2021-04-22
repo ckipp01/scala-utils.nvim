@@ -13,10 +13,10 @@ use {
 
 ## Available modules
 
-    - [Coursier](https://get-coursier.io)
+- [Coursier](https://get-coursier.io)
 
 ## Getting Started
 
 Check out the [help
-docs](https://github.com/ckipp01/scala-utils.nvim/blob/main/doc/metals.txt).
+docs](https://github.com/ckipp01/scala-utils.nvim/blob/main/doc/scala-utils.txt).
 
