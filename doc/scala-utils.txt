@@ -1,0 +1,87 @@
+*scala-utils.txt*                                               scala-utils.nvim 
+A nvim plugin offering some utilities to work with Scala and integration with
+modern Scala tooling.
+
+As a wise man once said: >
+
+   not a ton here, but useful for me
+
+   - Derek Wyatt
+<
+
+Hopefully this will also be useful to you.
+
+                            SCALA-UTILS REFERENCE MANUAL
+
+CONTENTS                                                           *scala-utils*
+
+    1. Setup................. |scala-utils-setup|
+    2. Options............... |scala-utils-options|
+    3. Lua APIS...............|scala-utils-lua-apis|
+
+================================================================================
+SETUP                                                        *scala-utils-setup*
+
+As an example using Packer, you can install scala-utils like so: >
+  use {
+    "ckipp01/scala-utils.nvim",
+    requires = { "nvim-lua/plenary.nvim" }
+  }
+<
+
+NOTE: that `nvim-lua/plenary.nvim` is required. More than likely you'll
+already have this installe for usage in another plugin, but if not this offers
+some useful utils written much nicer than I'd have written them.
+
+================================================================================
+OPTIONS                                                    *scala-utils-options*
+
+The following options are available for scala-utils.
+
+                                                          *g:scala_utils_prompt*
+Type: string ~
+Default: '❯' ~
+
+Prompt to be used whenever there is a prompt used in scala-utils.
+
+================================================================================
+LUA APIS                                                  *scala-utils-lua-apis*
+
+The aim for scala-utils is to provide different module APIs to interact with
+different tools in the ecosystem. The only currently available API is a
+minimal coursier API. We'll use that to show some example mappings: >
+
+  local api = vim.api
+  local opts = { noremap = true, silent = true }
+
+  api.nvim_set_keymap("n", "<leader>slc", [[require("scala-utils.coursier").complete_from_line()<CR>]], opts)
+  api.nvim_set_keymap("n", "<leader>sc", [[require("scala-utils.coursier").complete()<CR>]], opts)
+<
+
+================================================================================
+COURSIER API                                          *scala-utils-coursier-api*
+
+                                                                    *complete()*
+complete()                   Opens up a prompt for input from the user. This
+                             will then function in the same manner that using
+                             `cs complete` from the command line will. So the
+                             expected input should be in one of the following
+                             formats: >
+  org.scalame
+  org.scalameta:metal
+  org.scalameta:metals_2.12:0.
+
+<
+                            All of those would be valid formats to pass into
+                            |complete()|. When it reaches the last step of
+                            completion `<CR>` will copy the version out.
+
+                                                          *complete_from_line()*
+complete_from_line()       Provides the exact functionality as |complete()|
+                           however it will pull the org and artifact from the
+                           current line and start the completion from there.
+                           This will work in sbt build files, Mill build
+                           files, Ammonite scripts, and Metals worksheets.
+
+
+vim:tw=80:ts=2:ft=help:
