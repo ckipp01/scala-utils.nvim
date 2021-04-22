@@ -199,7 +199,7 @@ local function stage_from_input(org, artifact, version)
   return stage
 end
 
-local complete = function()
+local complete_from_input = function()
   -- TODO: this can probably just be smaller a single line (look into how Telescope does this)
   local win = Float.percentage_range_window(0.5, 0.1)
   vim.api.nvim_buf_set_option(win.bufnr, "buftype", "prompt")
@@ -223,7 +223,7 @@ local complete = function()
 end
 
 return {
-  complete = complete,
+  complete_from_input = complete_from_input,
   complete_from_line = complete_from_line,
   continue_completion = continue_completion,
   copy_version = copy_version,
