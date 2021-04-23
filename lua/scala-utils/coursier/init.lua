@@ -136,7 +136,7 @@ Completion.create_window = function(self)
   if self.win ~= nil then
     print("Cannot create another completion window, one already exists.")
   else
-    local win = Float.percentage_range_window(0.5, 0.2)
+    local win = Float.percentage_range_window(0.5, 0.2, { winblend = 0 })
     self.win = win
   end
   return self
@@ -204,7 +204,7 @@ end
 
 local complete_from_input = function()
   -- TODO: this can probably just be smaller a single line (look into how Telescope does this)
-  local win = Float.percentage_range_window(0.5, 0.1)
+  local win = Float.percentage_range_window(0.5, 0.1, { winblend = 0 })
   vim.api.nvim_buf_set_option(win.bufnr, "buftype", "prompt")
   vim.fn.prompt_setprompt(win.bufnr, (vim.g["scala_utils_prompt"] or "❯") .. " ")
 
