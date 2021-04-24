@@ -55,7 +55,7 @@ minimal coursier API. We'll use that to show some example mappings: >
   local opts = { noremap = true, silent = true }
 
   api.nvim_set_keymap("n", "<leader>slc", [[require("scala-utils.coursier").complete_from_line()<CR>]], opts)
-  api.nvim_set_keymap("n", "<leader>sc", [[require("scala-utils.coursier").complete()<CR>]], opts)
+  api.nvim_set_keymap("n", "<leader>sc", [[require("scala-utils.coursier").complete_from_input()<CR>]], opts)
 <
 
 The current apis are:
@@ -66,7 +66,7 @@ NOTE: These for sure are not stable for the time being.
 ================================================================================
 COURSIER API                                          *scala-utils-coursier-api*
 
-                                                         *complete_from_input()*
+                                                                    *complete()*
 complete({to_complete})      Completes a given string. Must be in a valid
                              format that `cs complete` can understand.
 
