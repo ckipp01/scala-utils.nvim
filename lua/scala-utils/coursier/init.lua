@@ -1,9 +1,16 @@
-local Job = require("plenary.job")
+local has_plenary, Job = pcall(require, "plenary.job")
 local F = require("plenary.functional")
 local Float = require("plenary.window.float")
 
+if not has_plenary then
+  error("You must have plenary installed to use this. 'nvim-lua/plenary.nvim'")
+end
+
+local msg = require("scala-utils.msg")
+
 -- Offering the functionality of `cs complete` inside nvim
 -- https://get-coursier.io/docs/cli-complete
+
 local ongoing_completion = nil
 local ORG_STAGE = "ORG"
 local ARTIFACT_STAGE = "ARTIFACT"
@@ -23,7 +30,8 @@ local complete = function(to_complete)
       if return_val == 0 then
         result = j:result()
       else
-        print("Something went wrong, unable to get completions")
+        msg.show_error("Something went wrong, unable to get completions")
+        msg.show_error(j:stderr_result())
       end
     end,
   }):sync()
@@ -50,7 +58,7 @@ Completion.increment_stage = function(self)
   elseif self.stage == ARTIFACT_STAGE then
     self.stage = VERSION_STAGE
   else
-    print(string.format("Invalid, stage cannot increment further than %s.", VERSION_STAGE))
+    msg.show_error(string.format("Invalid, stage cannot increment further than %s.", VERSION_STAGE))
   end
   return self
 end
@@ -66,7 +74,7 @@ Completion.complete = function(self)
   elseif self.stage == VERSION_STAGE then
     args = string.format("%s%s%s%s%s", self.org, seperator, self.artifact, seperator, self.version or "")
   else
-    print(string.format("Invalid stage: %s", self.stage))
+    msg.show_error(string.format("Invalid stage: %s", self.stage))
   end
   self.completions = complete(args)
   if self.stage == VERSION_STAGE then
@@ -134,7 +142,7 @@ end
 
 Completion.create_window = function(self)
   if self.win ~= nil then
-    print("Cannot create another completion window, one already exists.")
+    msg.show_error(string.format("Cannot create another completion window, one already exists."))
   else
     local win = Float.percentage_range_window(0.5, 0.2, { winblend = 0 })
     self.win = win
@@ -166,7 +174,7 @@ local function complete_from_line()
     end
     ongoing_completion = completion
   else
-    print("Unable to find a dependency on this line.")
+    msg.show_warning("Unable to find a dependency on this line.")
   end
 end
 
@@ -184,7 +192,7 @@ end
 local copy_version = function()
   local line_contents = vim.api.nvim_get_current_line()
   vim.fn.setreg("+", line_contents)
-  print("Copied version")
+  msg.show_info("Copied version")
   vim.api.nvim_win_close(ongoing_completion.win.win, true)
 end
 
@@ -218,10 +226,12 @@ local complete_from_input = function()
       local completion = Completion.new(org, artifact, version, stage)
       completion:complete():create_window():set_display():set_keymap()
       ongoing_completion = completion
+    else
+      msg.show_warning("Must pass in valid input.")
     end
   end)
 
-  vim.cmd([[startinsert]])
+  vim.cmd("startinsert")
 end
 
 return {
