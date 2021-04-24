@@ -4,7 +4,6 @@ local F = require("plenary.functional")
 if not has_plenary then
   error("You must have plenary installed to use this. 'nvim-lua/plenary.nvim'")
 end
-
 local msg = require("scala-utils.msg")
 local ui = require("scala-utils.ui")
 
@@ -21,6 +20,7 @@ local seperator = ":"
 local key_mappings = {
   continue_completion = "<cmd>lua require('scala-utils.coursier').continue_completion()<CR>",
   copy_version = "<cmd>lua require('scala-utils.coursier').copy_version()<CR>",
+  copy_to_sbt = "<cmd>lua require('scala-utils.coursier').copy_to_sbt()<CR>",
 }
 
 -- @param to_complete (string) The string to pass to complete
@@ -142,7 +142,8 @@ Completion.set_keymap = function(self)
     -- 1. copy out to sbt format "org" % "artifact" % version
     --  - choose if it's %, %%, or js %%%
     -- 2. copy out to ivy $ivy.`org::artifact:version`
-    vim.api.nvim_buf_set_keymap(self.win.bufnr, "n", "<CR>", key_mappings["copy_version"], { nowait = true, silent = true })
+    vim.api.nvim_buf_set_keymap(self.win.bufnr, "n", "v", key_mappings["copy_version"], { nowait = true, silent = true })
+    vim.api.nvim_buf_set_keymap(self.win.bufnr, "n", "s", key_mappings["copy_to_sbt"], { nowait = true, silent = true })
   end
   return self
 end
@@ -222,6 +223,33 @@ local copy_version = function()
   msg.show_info("Copied version")
   vim.api.nvim_win_close(ongoing_completion.win.win, true)
 end
+
+local copy_to_sbt = function()
+  local line_contents = vim.api.nvim_get_current_line()
+  ongoing_completion.version = line_contents
+
+  local java_or_scala, artifact
+  local start, end_point = ongoing_completion.artifact:find("_")
+  if start and end_point then
+    artifact = ongoing_completion.artifact:sub(0, start - 1)
+    java_or_scala = "%%"
+  else
+    artifact = ongoing_completion.artifact
+    java_or_scala = "%"
+  end
+
+  local sbt_string = string.format(
+    [["%s" %s "%s" %% "%s"]],
+    ongoing_completion.org,
+    java_or_scala,
+    artifact,
+    ongoing_completion.version
+  )
+  vim.fn.setreg("+", sbt_string)
+  msg.show_info("Copied sbt dependency")
+  vim.api.nvim_win_close(ongoing_completion.win.win, true)
+end
+
 local function stage_from_input(org, artifact, version)
   local stage = nil
   if org and org ~= "" then
@@ -268,5 +296,6 @@ return {
   complete_from_input = complete_from_input,
   complete_from_line = complete_from_line,
   continue_completion = continue_completion,
+  copy_to_sbt = copy_to_sbt,
   copy_version = copy_version,
 }

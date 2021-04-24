@@ -2,6 +2,8 @@
 
 Some extra utils for working with modern Scala tooling in NeoVim.
 
+NOTE: This is pretty rapidly changing at the moment, so expect things to break.
+
 ## Installation
 
 ```lua
