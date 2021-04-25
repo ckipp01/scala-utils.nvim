@@ -30,18 +30,20 @@ local key_mappings = {
 -- @param to_complete (string) The string to pass to complete
 local complete = function(to_complete)
   local result
-  Job:new({
-    command = "cs",
-    args = { "complete", to_complete },
-    on_exit = function(j, return_val)
-      if return_val == 0 then
-        result = j:result()
-      else
-        msg.show_error("Something went wrong, unable to get completions")
-        msg.show_error(j:stderr_result())
-      end
-    end,
-  }):sync()
+  Job
+    :new({
+      command = "cs",
+      args = { "complete", to_complete },
+      on_exit = function(j, return_val)
+        if return_val == 0 then
+          result = j:result()
+        else
+          msg.show_error("Something went wrong, unable to get completions")
+          msg.show_error(j:stderr_result())
+        end
+      end,
+    })
+    :sync()
   return result
 end
 
@@ -64,7 +66,7 @@ Completion.new = function(org, artifact, version, stage)
   elseif stage == VERSION_STAGE then
     starting_title = org .. seperator .. artifact .. seperator
   end
-  return setmetatable({
+  local completion = setmetatable({
     org = org,
     artifact = artifact,
     version = version,
@@ -72,6 +74,8 @@ Completion.new = function(org, artifact, version, stage)
     stage = stage,
     title = starting_title,
   }, Completion)
+  ongoing_completion = completion
+  return completion
 end
 
 -- There are three valid states of completion since you always have to start with something
@@ -203,7 +207,6 @@ local function complete_from_line()
     else
       completion:create_window():set_display():set_keymaps()
     end
-    ongoing_completion = completion
   else
     msg.show_warning("Unable to find a dependency on this line.")
   end
@@ -300,7 +303,6 @@ local complete_from_input = function()
     if stage then
       local completion = Completion.new(org, artifact, version, stage)
       completion:complete():create_window():set_display():set_keymaps()
-      ongoing_completion = completion
     else
       msg.show_warning("Must pass in valid input.")
     end
