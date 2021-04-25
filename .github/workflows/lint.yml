@@ -1,0 +1,33 @@
+name: scala-utils linting
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  lint-check:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout sources
+      uses: actions/checkout@v2
+
+    - name: Setup luacheck
+      run: |
+        sudo apt update &&
+        sudo apt install -y lua5.1 luarocks &&
+        sudo luarocks install luacheck
+    - name: Run luacheck
+      run: make lint
+  format-check:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v2
+    - name: Restore cache
+      uses: Swatinem/rust-cache@v1
+    - name: setup StyLua
+      run: cargo install stylua
+    - name: run StyLua
+      run: make format-check
