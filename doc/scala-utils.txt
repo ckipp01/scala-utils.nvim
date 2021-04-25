@@ -49,10 +49,19 @@ configuration options and their defaults below. >
     coursier = {
       -- mapping to continue the completion process
       continue_completion_mapping = "<CR>",
+      -- mapping to copy the full output to your clipboad in mill format
+      -- NOTE: This is only available at the last completion step where the
+      --       version is being shown
+      copy_to_mill_mapping = "m",
       -- mapping to copy the full output to your clipboad in sbt format
       -- NOTE: This is only available at the last completion step where the
       --       version is being shown
       copy_to_sbt_mapping = "s",
+      -- mapping to copy the full output to your clipboad in metals worksheet
+      -- format
+      -- NOTE: This is only available at the last completion step where the
+      --       version is being shown
+      copy_to_worksheet_mapping = "w",
       -- mapping to copy only the version to your clipboad
       -- NOTE: This is only available at the last completion step where the
       --       version is being shown
@@ -124,13 +133,22 @@ complete_from_line()        Provides the exact functionality as |complete()|
                             This will work in sbt build files, Mill build
                             files, Ammonite scripts, and Metals worksheets.
 
-                                                                 *copy_to_sbt()*
-copy_to_sbt()               If your completion is already in the VERSION stage
+                                                                     *copy_to()*
+copy_to({format})           If your completion is already in the VERSION stage
                             this will select the version you're on and create
-                            a dependency string in sbt format that will be
-                            copied to your buffer. NOTE: there is a default
-                            mapping for this already, so it's uncommon that
-                            you'll ever actually manually use this.
+                            a dependency string in a specified format that
+                            will be copied to your buffer. NOTE: there are
+                            default mappings for these already, so it's
+                            uncommon that you'll ever actually manually use
+                            this.
+
+                            Parameters:
+                              {format} (string) The specified format. This is
+                              currently an enum of the following values:
+
+                              sbt: "org" %% "artifact" % "version"
+                              mill: ivy"org::artifact:version"
+                              worksheet: $dep.`org::artifact:version`
 
                                                                 *copy_version()*
 copy_version()              If your completion is already in the VERSION stage

@@ -20,9 +20,11 @@ local ARTIFACT_STAGE = "ARTIFACT"
 local VERSION_STAGE = "VERSION"
 local seperator = ":"
 local key_mappings = {
-  continue_completion = "<cmd>lua require('scala-utils.coursier').continue_completion()<CR>",
-  copy_version = "<cmd>lua require('scala-utils.coursier').copy_version()<CR>",
-  copy_to_sbt = "<cmd>lua require('scala-utils.coursier').copy_to_sbt()<CR>",
+  continue_completion = [[<cmd>lua require("scala-utils.coursier").continue_completion()<CR>]],
+  copy_to_mill = [[<cmd>lua require("scala-utils.coursier").copy_to("mill")<CR>]],
+  copy_to_sbt = [[<cmd>lua require("scala-utils.coursier").copy_to("sbt")<CR>]],
+  copy_to_worksheet = [[<cmd>lua require("scala-utils.coursier").copy_to("worksheet")<CR>]],
+  copy_version = [[<cmd>lua require("scala-utils.coursier").copy_version()<CR>]],
 }
 
 -- @param to_complete (string) The string to pass to complete
@@ -41,6 +43,13 @@ local complete = function(to_complete)
     end,
   }):sync()
   return result
+end
+
+-- @param bufnr (number) buffer number
+-- @param lhs (string) lhs for the mapping
+-- @param rhs (string) rhs for the mapping
+local function set_keymap(bufnr, lhs, rhs)
+  vim.api.nvim_buf_set_keymap(bufnr, "n", lhs, rhs, { nowait = true, silent = true })
 end
 
 local Completion = {}
@@ -130,30 +139,14 @@ Completion.set_display = function(self)
   return self
 end
 
-Completion.set_keymap = function(self)
+Completion.set_keymaps = function(self)
   if self.stage == ORG_STAGE or self.stage == ARTIFACT_STAGE then
-    vim.api.nvim_buf_set_keymap(
-      self.win.bufnr,
-      "n",
-      config.coursier.continue_completion_mapping,
-      key_mappings["continue_completion"],
-      { nowait = true, silent = true }
-    )
+    set_keymap(self.win.bufnr, config.coursier.continue_completion_mapping, key_mappings["continue_completion"])
   else
-    vim.api.nvim_buf_set_keymap(
-      self.win.bufnr,
-      "n",
-      config.coursier.copy_version_mapping,
-      key_mappings["copy_version"],
-      { nowait = true, silent = true }
-    )
-    vim.api.nvim_buf_set_keymap(
-      self.win.bufnr,
-      "n",
-      config.coursier.copy_to_sbt_mapping,
-      key_mappings["copy_to_sbt"],
-      { nowait = true, silent = true }
-    )
+    set_keymap(self.win.bufnr, config.coursier.copy_version_mapping, key_mappings["copy_version"])
+    set_keymap(self.win.bufnr, config.coursier.copy_to_sbt_mapping, key_mappings["copy_to_sbt"])
+    set_keymap(self.win.bufnr, config.coursier.copy_to_mill_mapping, key_mappings["copy_to_mill"])
+    set_keymap(self.win.bufnr, config.coursier.copy_to_worksheet_mapping, key_mappings["copy_to_worksheet"])
   end
   return self
 end
@@ -206,9 +199,9 @@ local function complete_from_line()
     local completion = Completion.new(org, artifact, nil, ARTIFACT_STAGE)
     completion:complete()
     if #completion.completions == 1 then
-      completion:increment_stage():complete():create_window():set_display():set_keymap()
+      completion:increment_stage():complete():create_window():set_display():set_keymaps()
     else
-      completion:create_window():set_display():set_keymap()
+      completion:create_window():set_display():set_keymaps()
     end
     ongoing_completion = completion
   else
@@ -221,9 +214,9 @@ local continue_completion = function()
   local prev_results = ongoing_completion.completions
   ongoing_completion:update_from_choice(line_contents):complete()
   if #ongoing_completion.completions == 1 or ongoing_completion:compare_completions(prev_results) then
-    ongoing_completion:increment_stage():complete():set_display():set_keymap()
+    ongoing_completion:increment_stage():complete():set_display():set_keymaps()
   else
-    ongoing_completion:set_display():set_keymap()
+    ongoing_completion:set_display():set_keymaps()
   end
 end
 
@@ -234,29 +227,44 @@ local copy_version = function()
   vim.api.nvim_win_close(ongoing_completion.win.win, true)
 end
 
-local copy_to_sbt = function()
+-- Create an output to copy out from the current completions org, artifact, and version.
+-- @param format (string) Enum of possible output values: sbt, mill, worksheet
+local function copy_to(format)
   local line_contents = vim.api.nvim_get_current_line()
   ongoing_completion.version = line_contents
-
-  local java_or_scala, artifact
+  local java_or_scala, artifact, format_string
   local start, end_point = ongoing_completion.artifact:find("_")
   if start and end_point then
     artifact = ongoing_completion.artifact:sub(0, start - 1)
-    java_or_scala = "%%"
+    if format == "sbt" then
+      java_or_scala = "%%"
+    else
+      java_or_scala = "::"
+    end
   else
     artifact = ongoing_completion.artifact
-    java_or_scala = "%"
+    if format == "sbt" then
+      java_or_scala = "%"
+    else
+      java_or_scala = ":"
+    end
   end
 
-  local sbt_string = string.format(
-    [["%s" %s "%s" %% "%s"]],
-    ongoing_completion.org,
-    java_or_scala,
-    artifact,
-    ongoing_completion.version
-  )
-  vim.fn.setreg("+", sbt_string)
-  msg.show_info("Copied sbt dependency")
+  if format == "sbt" then
+    format_string = [["%s" %s "%s" %% "%s"]]
+  elseif format == "mill" then
+    format_string = [[ivy"%s%s%s:%s"]]
+  elseif format == "worksheet" then
+    format_string = [[$dep.`%s%s%s:%s`]]
+  else
+    msg.show_error(string.format("Unknown output format: %s", format))
+  end
+
+  local output_string =
+    string.format(format_string, ongoing_completion.org, java_or_scala, artifact, ongoing_completion.version)
+
+  vim.fn.setreg("+", output_string)
+  msg.show_info(string.format("Copied %s dependency", format))
   vim.api.nvim_win_close(ongoing_completion.win.win, true)
 end
 
@@ -291,7 +299,7 @@ local complete_from_input = function()
 
     if stage then
       local completion = Completion.new(org, artifact, version, stage)
-      completion:complete():create_window():set_display():set_keymap()
+      completion:complete():create_window():set_display():set_keymaps()
       ongoing_completion = completion
     else
       msg.show_warning("Must pass in valid input.")
@@ -306,6 +314,6 @@ return {
   complete_from_input = complete_from_input,
   complete_from_line = complete_from_line,
   continue_completion = continue_completion,
-  copy_to_sbt = copy_to_sbt,
+  copy_to = copy_to,
   copy_version = copy_version,
 }

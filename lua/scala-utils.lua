@@ -3,7 +3,9 @@ local _config = {
   prompt = "❯",
   coursier = {
     continue_completion_mapping = "<CR>",
+    copy_to_mill_mapping = "m",
     copy_to_sbt_mapping = "s",
+    copy_to_worksheet_mapping = "w",
     copy_version_mapping = "v",
   },
 }
