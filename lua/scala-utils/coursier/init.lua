@@ -4,6 +4,8 @@ local F = require("plenary.functional")
 if not has_plenary then
   error("You must have plenary installed to use this. 'nvim-lua/plenary.nvim'")
 end
+
+local config = require("scala-utils")._config
 local msg = require("scala-utils.msg")
 local ui = require("scala-utils.ui")
 
@@ -133,17 +135,25 @@ Completion.set_keymap = function(self)
     vim.api.nvim_buf_set_keymap(
       self.win.bufnr,
       "n",
-      "<CR>",
+      config.coursier.continue_completion_mapping,
       key_mappings["continue_completion"],
       { nowait = true, silent = true }
     )
   else
-    -- TODO add 3 different keymappings
-    -- 1. copy out to sbt format "org" % "artifact" % version
-    --  - choose if it's %, %%, or js %%%
-    -- 2. copy out to ivy $ivy.`org::artifact:version`
-    vim.api.nvim_buf_set_keymap(self.win.bufnr, "n", "v", key_mappings["copy_version"], { nowait = true, silent = true })
-    vim.api.nvim_buf_set_keymap(self.win.bufnr, "n", "s", key_mappings["copy_to_sbt"], { nowait = true, silent = true })
+    vim.api.nvim_buf_set_keymap(
+      self.win.bufnr,
+      "n",
+      config.coursier.copy_version_mapping,
+      key_mappings["copy_version"],
+      { nowait = true, silent = true }
+    )
+    vim.api.nvim_buf_set_keymap(
+      self.win.bufnr,
+      "n",
+      config.coursier.copy_to_sbt_mapping,
+      key_mappings["copy_to_sbt"],
+      { nowait = true, silent = true }
+    )
   end
   return self
 end
@@ -271,7 +281,7 @@ local complete_from_input = function()
   local bordered_win = ui.bordered_win(win_opts, { title = "complete" })
 
   vim.api.nvim_buf_set_option(bordered_win.bufnr, "buftype", "prompt")
-  vim.fn.prompt_setprompt(bordered_win.bufnr, (vim.g["scala_utils_prompt"] or "❯") .. " ")
+  vim.fn.prompt_setprompt(bordered_win.bufnr, config.prompt .. " ")
 
   vim.fn.prompt_setcallback(bordered_win.bufnr, function(text)
     vim.api.nvim_win_close(bordered_win.win_id, true)

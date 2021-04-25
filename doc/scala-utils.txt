@@ -1,4 +1,5 @@
 *scala-utils.txt*                                               scala-utils.nvim 
+
 A nvim plugin offering some utilities to work with Scala and integration with
 modern Scala tooling.
 
@@ -8,15 +9,16 @@ As a wise man once said: >
 
    - Derek Wyatt
 <
-
-Hopefully this will also be useful to you.
+Much of this is just things I wish I had while developing Scala in NeoVim.
+Some of it may be useless to the average person, but hopefully some of this
+will also be useful to you.
 
                             SCALA-UTILS REFERENCE MANUAL
 
 CONTENTS                                                           *scala-utils*
 
     1. Setup................. |scala-utils-setup|
-    2. Options............... |scala-utils-options|
+    2. Configuration......... |scala-utils-configuration|
     3. Lua APIS...............|scala-utils-lua-apis|
 
 ================================================================================
@@ -30,19 +32,34 @@ As an example using Packer, you can install scala-utils like so: >
 <
 
 NOTE: that `nvim-lua/plenary.nvim` is required. More than likely you'll
-already have this installe for usage in another plugin, but if not this offers
-some useful utils written much nicer than I'd have written them.
+already have this installed for usage in another plugin, but if not this
+offers some useful utils written much nicer than I'd have written them.
 
 ================================================================================
-OPTIONS                                                    *scala-utils-options*
+CONFIGURATION                                        *scala-utils-configuration*
 
-The following options are available for scala-utils.
+To get started with scala-utils you don't actually need to do anythign but
+install it. However, if you'd like to change some of the defaults, you can
+pass in a configuration table to a setup function. You'll find all of the
+configuration options and their defaults below. >
 
-                                                          *g:scala_utils_prompt*
-Type: string ~
-Default: '❯' ~
-
-Prompt to be used whenever there is a prompt used in scala-utils.
+  require("scala-utils").setup({
+    -- used for all prompts in scala-utils
+    prompt = "❯",
+    coursier = {
+      -- mapping to continue the completion process
+      continue_completion_mapping = "<CR>",
+      -- mapping to copy the full output to your clipboad in sbt format
+      -- NOTE: This is only available at the last completion step where the
+      --       version is being shown
+      copy_to_sbt_mapping = "s",
+      -- mapping to copy only the version to your clipboad
+      -- NOTE: This is only available at the last completion step where the
+      --       version is being shown
+      copy_version_mapping = "v",
+    },
+  })
+<
 
 ================================================================================
 LUA APIS                                                  *scala-utils-lua-apis*
@@ -59,9 +76,20 @@ minimal coursier API. We'll use that to show some example mappings: >
 <
 
 The current apis are:
+  - scala-utils
   - Coursier
 
 NOTE: These for sure are not stable for the time being.
+
+                                                                       *setup()*
+setup({config})               Called to pass in a configuration table to
+                              change the default behavior of various modules and
+                              settings.
+                              
+                              Parameters:
+                                {config} (table) Configuration table. The full
+                                table can be seen in
+                                |scala-utils-configuration|.
 
 ================================================================================
 COURSIER API                                          *scala-utils-coursier-api*
@@ -96,5 +124,19 @@ complete_from_line()        Provides the exact functionality as |complete()|
                             This will work in sbt build files, Mill build
                             files, Ammonite scripts, and Metals worksheets.
 
+                                                                 *copy_to_sbt()*
+copy_to_sbt()               If your completion is already in the VERSION stage
+                            this will select the version you're on and create
+                            a dependency string in sbt format that will be
+                            copied to your buffer. NOTE: there is a default
+                            mapping for this already, so it's uncommon that
+                            you'll ever actually manually use this.
+
+                                                                *copy_version()*
+copy_version()              If your completion is already in the VERSION stage
+                            this will select the version you're on and copy it
+                            buffer. NOTE: there is a default mapping for this
+                            already, so it's uncommon that you'll ever
+                            actually manually use this.
 
 vim:tw=80:ts=2:ft=help:
