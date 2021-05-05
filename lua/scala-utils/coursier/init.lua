@@ -89,8 +89,6 @@ Completion.increment_stage = function(self)
   elseif self.stage == ARTIFACT_STAGE then
     self.stage = VERSION_STAGE
     self.title = self.org .. seperator .. self.artifact .. seperator
-  else
-    msg.show_error(string.format("Invalid, stage cannot increment further than %s.", VERSION_STAGE))
   end
   return self
 end
@@ -263,20 +261,29 @@ local function copy_to(format)
     msg.show_error(string.format("Unknown output format: %s", format))
   end
 
-  local output_string =
-    string.format(format_string, ongoing_completion.org, java_or_scala, artifact, ongoing_completion.version)
+  local output_string = string.format(
+    format_string,
+    ongoing_completion.org,
+    java_or_scala,
+    artifact,
+    ongoing_completion.version
+  )
 
   vim.fn.setreg("+", output_string)
   msg.show_info(string.format("Copied %s dependency", format))
   vim.api.nvim_win_close(ongoing_completion.win.win, true)
 end
 
-local function stage_from_input(org, artifact, version)
+local function stage_from_input(org, artifact, version, colon_count)
   local stage = nil
   if org and org ~= "" then
     stage = ORG_STAGE
     if artifact and artifact ~= "" then
-      stage = ARTIFACT_STAGE
+      if colon_count == 1 then
+        stage = ARTIFACT_STAGE
+      else
+        stage = VERSION_STAGE
+      end
       if version and version ~= "" then
         stage = VERSION_STAGE
       end
@@ -297,8 +304,18 @@ local complete_from_input = function()
   vim.fn.prompt_setcallback(bordered_win.bufnr, function(text)
     vim.api.nvim_win_close(bordered_win.win_id, true)
     vim.api.nvim_buf_delete(bordered_win.bufnr, { force = true })
+
     local org, artifact, version = text:match("([%w%-%._]+):?([%w%-%._]*):?(.*)")
-    local stage = stage_from_input(org, artifact, version)
+    -- So this isn't ideal to do again, and it may be possible to just capture
+    -- this somehow with the above match, but I'm unsure how and this is way
+    -- easier atm. We need to capture is since in the scenario
+    -- `org.scalameta:metals_2.12:` we actually want to be at the version
+    -- stage, but it's currently registered at the artifact because the `:`
+    -- isn't taken into account, so here we grab it to correctly be able to set
+    -- the stage. However, we don't fully rely on it since we still want to
+    -- ensure it's in valid format.
+    local _, colon_count = text:gsub(":", "")
+    local stage = stage_from_input(org, artifact, version, colon_count)
 
     if stage then
       local completion = Completion.new(org, artifact, version, stage)
