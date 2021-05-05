@@ -26,6 +26,6 @@ jobs:
     - name: checkout
       uses: actions/checkout@v2
     - name: setup StyLua
-      run: cargo install stylua
+      run: cargo install --version 0.8.1 stylua
     - name: run StyLua
       run: make format-check
