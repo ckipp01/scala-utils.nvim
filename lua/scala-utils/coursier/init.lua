@@ -138,6 +138,10 @@ end
 Completion.set_display = function(self)
   vim.api.nvim_buf_set_lines(self.win.bufnr, 0, -1, false, self.completions)
   self.win.border:change_title(self.title)
+
+  if self.stage == VERSION_STAGE then
+    vim.api.nvim_win_set_cursor(self.win.win_id, { 1, 0 })
+  end
   return self
 end
 
