@@ -24,11 +24,13 @@ local function clear(bufnr)
 end
 
 local clear_buf_on_leave = function(bufnr)
-  vim.cmd(string.format(
-    "autocmd WinLeave,BufLeave,BufDelete <buffer=%s> ++once ++nested lua require('scala-utils.ui').clear(%s)",
-    bufnr,
-    bufnr
-  ))
+  vim.cmd(
+    string.format(
+      "autocmd WinLeave,BufLeave,BufDelete <buffer=%s> ++once ++nested lua require('scala-utils.ui').clear(%s)",
+      bufnr,
+      bufnr
+    )
+  )
 end
 
 local default_win_opts = {
