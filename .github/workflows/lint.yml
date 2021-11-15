@@ -3,7 +3,7 @@ name: scala-utils linting
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
 
 jobs:
@@ -20,12 +20,16 @@ jobs:
         sudo luarocks install luacheck
     - name: Run luacheck
       run: make lint
+
   format-check:
     runs-on: ubuntu-latest
     steps:
-    - name: checkout
+    - name: Checkout
       uses: actions/checkout@v2
-    - name: setup StyLua
-      run: cargo install --version 0.8.1 stylua
-    - name: run StyLua
-      run: make format-check
+
+    - name: Run StyLua
+      uses: JohnnyMorganz/stylua-action@1.0.0
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        version: 0.11.0
+        args: --check lua/
